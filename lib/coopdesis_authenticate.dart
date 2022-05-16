@@ -38,7 +38,7 @@ class Nav {
 }
 
 class CoopdesisAuthenticate extends Bloc<AuthEvent, AuthState> {
-  CoopdesisAuthenticate(initialState) : super(initialState);
+  CoopdesisAuthenticate() : super(const AuthWaitingState());
 
   static final FlutterSecureStorage _storage = FlutterSecureStorage();
   static final Connectivity _connectivity = Connectivity();
@@ -61,8 +61,7 @@ class CoopdesisAuthenticate extends Bloc<AuthEvent, AuthState> {
     //Verifica si el usuario tiene conexion a internet
     if (await _connectivity.checkConnectivity() == ConnectivityResult.none) {
       _storage.delete(key: 'custom-token');
-      // add(LogoutAuthEvent());
-      add;
+      add(LogoutAuthEvent());
       return;
     }
 
@@ -95,7 +94,11 @@ class CoopdesisAuthenticate extends Bloc<AuthEvent, AuthState> {
   //Crea un usuario basado en la conexion anonima
   Future<void> refreshConnectionAnonymous() async {
     //Se logea a firebase de ser necesario y genera un UID cada vez que se llama
-    final UserCredential? user = await _auth.signInAnonymously();
+    final UserCredential? userAno = await _auth.signInAnonymously();
+
+    AuthModel user = AuthModel(
+        uid: userAno!.credential!.token.toString(),
+        userBackendAutenticate: false);
 
     if (user == null) {
       add(LogoutAuthEvent());
@@ -103,11 +106,9 @@ class CoopdesisAuthenticate extends Bloc<AuthEvent, AuthState> {
     }
 
     if (state.statusConnetion == StatusConnetion.anonymousQR) {
-      // add(AuthAnonymousQREvent(anonymousUser: user));
-      add;
+      add(AuthAnonymousQREvent(anonymousUser: user));
     } else {
-      // add(AuthAnonymousLoginEvent(anonymousUser: user));
-      add;
+      add(AuthAnonymousLoginEvent(anonymousUser: user));
     }
     await Future.delayed(const Duration(microseconds: 1));
   }
